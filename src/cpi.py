@@ -2,11 +2,14 @@ import qstock as qs
 import pandas as pd
 import matplotlib.pyplot as plt
 import pandas_datareader as pdr
+from pyecharts.charts import Grid, Line
+from pyecharts import options as opts
+import numpy as np
+import plotly.express as px
 
 def get_cpi():
     # 获取CPI数据
     cpi_data = qs.cpi()
-    
     # 检查数据框的列名
     print("CPI数据的列名：", cpi_data.columns)
     
@@ -24,18 +27,40 @@ def get_cpi():
     # 保存为Excel文件
     cpi_data.to_excel('../date/qstock_china_cpi_1980_2025.xlsx', index=False)
     
-    # 绘制CPI走势图
-    # 假设 '全国当月' 列是CPI值
-    plt.figure(figsize=(10, 6))
-    plt.plot(cpi_data['月份'], cpi_data['全国当月'], marker='o', linestyle='-', color='b')
-    plt.title('China CPI from 1980 to 2025')
-    plt.xlabel('Month')
-    plt.ylabel('CPI')
-    plt.grid(True)
-    # plt.show()
-    # 保存图片
-    plt.savefig('../date/qstock_china_CPI_同比增速趋势图.png', dpi=300, bbox_inches='tight')
+    # 前向填充缺失值
+    cpi_data = cpi_data.ffill()
+    # 转换为 Pandas 时间序列
+    cpi_data.index = pd.to_datetime(cpi_data.index)
     
+    # 生成格式化日期列表（用于 pyecharts）
+    date_list = cpi_data['月份'].apply(lambda x: f"{x.year}-{x.month:02d}").tolist()
+    values = cpi_data['全国当月'].round(2).tolist()
+    # 计算动态范围
+    y_min = np.floor(min(values) / 5) * 5
+    y_max = np.ceil(max(values) / 5) * 5
+    line = (
+        Line(init_opts=opts.InitOpts(theme="chalk", width="1200px", height="600px"))
+        .add_xaxis(date_list)
+        .add_yaxis(
+            series_name="CPI同比增速(%)",
+            y_axis=values,
+            is_smooth=True,
+            symbol="circle",
+            symbol_size=6,
+            linestyle_opts=opts.LineStyleOpts(width=3),
+            label_opts=opts.LabelOpts(is_show=False)
+        )
+        .set_global_opts(
+            title_opts=opts.TitleOpts(title="中国CPI同比增速趋势（1980-2025）", subtitle="数据来源：qstock宏观经济数据库"),
+            tooltip_opts=opts.TooltipOpts(trigger="axis", axis_pointer_type="cross"),
+            datazoom_opts=[opts.DataZoomOpts(range_start=0, range_end=100)],
+            xaxis_opts=opts.AxisOpts(name="年份", axislabel_opts=opts.LabelOpts(rotate=45)),
+            yaxis_opts=opts.AxisOpts(name="同比增速(%)", min_=y_min, max_=y_max),
+        )
+    )
+    # 生成交互式 HTML
+    line.render("../date/qstock_cpi_trend_pyecharts.html")
+        
     # FRED 中中国 CPI 的代码为 CHNCPIALLMINMEI（1960年起，月度数据）
     cpi_fred = pdr.DataReader(
         'CHNCPIALLMINMEI',  # 经济指标代码
@@ -57,15 +82,36 @@ def get_cpi():
     # 保存为 Excel（需安装 openpyxl）
     cpi_fred.to_excel('../date/fred_china_cpi.xlsx', sheet_name='CPI')
     
-    plt.figure(figsize=(14, 6))
-    # plt.plot(cpi_fred.index, cpi_fred['DDOE01CNM086NWDB'], color='#2C73D2', linewidth=2)
-    plt.plot(cpi_fred.index, cpi_fred.iloc[:, 0], color='#2C73D2', linewidth=2)  # 使用索引避免硬编码列名
-    plt.title('China CPI Index (1980-2025)', fontsize=14)
-    plt.grid(True, linestyle='--', alpha=0.7)
-    plt.savefig('../date/fred_china_cpi_trend.png', dpi=300)
-    # plt.show()
-    
+    # 生成格式化日期列表（用于 pyecharts）
+    date_list = cpi_fred.index.strftime("%Y-%m").tolist()
+    values = cpi_fred['CPI'].round(2).tolist()
+    # 计算动态范围
+    y_min = np.floor(min(values) / 5) * 5
+    y_max = np.ceil(max(values) / 5) * 5
+    line = (
+        Line(init_opts=opts.InitOpts(theme="chalk", width="1200px", height="600px"))
+        .add_xaxis(date_list)
+        .add_yaxis(
+            series_name="CPI同比增速(%)",
+            y_axis=values,
+            is_smooth=True,
+            symbol="circle",
+            symbol_size=6,
+            linestyle_opts=opts.LineStyleOpts(width=3),
+            label_opts=opts.LabelOpts(is_show=False)
+        )
+        .set_global_opts(
+            title_opts=opts.TitleOpts(title="中国CPI同比增速趋势（1980-2025）", subtitle="数据来源：fred数据库"),
+            tooltip_opts=opts.TooltipOpts(trigger="axis", axis_pointer_type="cross"),
+            datazoom_opts=[opts.DataZoomOpts(range_start=0, range_end=100)],
+            xaxis_opts=opts.AxisOpts(name="年份", axislabel_opts=opts.LabelOpts(rotate=45)),
+            yaxis_opts=opts.AxisOpts(name="同比增速(%)", min_=y_min, max_=y_max),
+        )
+    )
+    # 生成交互式 HTML
+    line.render("../date/fred_cpi_trend_pyecharts.html")
+        
 
 if __name__ == '__main__':
     get_cpi()
-# breakpoint()
+
