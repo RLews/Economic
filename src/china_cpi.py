@@ -59,7 +59,7 @@ def get_cpi():
         )
     )
     # 生成交互式 HTML
-    line.render("../date/qstock_cpi_trend_pyecharts.html")
+    line.render("../date/qstock_cn_cpi_trend_pyecharts.html")
         
     # FRED 中中国 CPI 的代码为 CHNCPIALLMINMEI（1960年起，月度数据）
     cpi_fred = pdr.DataReader(
@@ -113,7 +113,7 @@ def get_cpi():
         )
     )
     # 生成交互式 HTML
-    line.render("../date/fred_cpi_trend_pyecharts.html")
+    line.render("../date/fred_cn_cpi_trend_pyecharts.html")
         
 
 if __name__ == '__main__':

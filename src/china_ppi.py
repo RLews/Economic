@@ -59,7 +59,7 @@ def get_ppi():
         )
     )
     # 生成交互式 HTML
-    line.render("../date/qstock_ppi_trend_pyecharts.html")
+    line.render("../date/qstock_cn_ppi_trend_pyecharts.html")
 
 
 if __name__ == '__main__':
