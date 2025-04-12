@@ -51,7 +51,7 @@ def get_cpi():
             label_opts=opts.LabelOpts(is_show=False)
         )
         .set_global_opts(
-            title_opts=opts.TitleOpts(title="中国CPI同比增速趋势（1980-2025）", subtitle="数据来源：qstock宏观经济数据库 PPI（生产者价格指数）"),
+            title_opts=opts.TitleOpts(title="中国CPI同比增速趋势（1980-2025）", subtitle="数据来源：qstock宏观经济数据库 CPI（居民消费价格指数）"),
             tooltip_opts=opts.TooltipOpts(trigger="axis", axis_pointer_type="cross"),
             datazoom_opts=[opts.DataZoomOpts(range_start=0, range_end=100)],
             xaxis_opts=opts.AxisOpts(name="年份", axislabel_opts=opts.LabelOpts(rotate=45)),
@@ -72,19 +72,23 @@ def get_cpi():
     # 重命名列名并清理索引
     cpi_fred.columns = ['CPI']
     cpi_fred.index.name = 'Date'
+    # 计算同比增速： (当前月CPI / 上年同月CPI - 1) * 100
+    cpi_fred['CPI同比'] = cpi_fred['CPI'].pct_change(periods=12) * 100  # 网页2[2](@ref)
+    cpi_fred = cpi_fred.dropna(subset=['CPI同比'])  # 删除前12个月无同比数据的行
     
+    # 处理缺失值（线性插值，针对后续月份可能的数据缺失）
+    cpi_fred['CPI同比'] = cpi_fred['CPI同比'].interpolate(method='time')  # 网页2[2](@ref)
     # 前向填充缺失值（适用于连续少量缺失）
-    cpi_fred = cpi_fred.ffill()
-    
+    # cpi_fred = cpi_fred.ffill()
     # 或线性插值（适用于趋势平稳数据）
-    cpi_fred = cpi_fred.interpolate(method='linear')
+    # cpi_fred = cpi_fred.interpolate(method='linear')
     
     # 保存为 Excel（需安装 openpyxl）
     cpi_fred.to_excel('../date/fred_china_cpi.xlsx', sheet_name='CPI')
     
     # 生成格式化日期列表（用于 pyecharts）
     date_list = cpi_fred.index.strftime("%Y-%m").tolist()
-    values = cpi_fred['CPI'].round(2).tolist()
+    values = cpi_fred['CPI同比'].round(2).tolist()
     # 计算动态范围
     y_min = np.floor(min(values) / 5) * 5
     y_max = np.ceil(max(values) / 5) * 5
