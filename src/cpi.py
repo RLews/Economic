@@ -51,7 +51,7 @@ def get_cpi():
             label_opts=opts.LabelOpts(is_show=False)
         )
         .set_global_opts(
-            title_opts=opts.TitleOpts(title="中国CPI同比增速趋势（1980-2025）", subtitle="数据来源：qstock宏观经济数据库"),
+            title_opts=opts.TitleOpts(title="中国CPI同比增速趋势（1980-2025）", subtitle="数据来源：qstock宏观经济数据库 PPI（生产者价格指数）"),
             tooltip_opts=opts.TooltipOpts(trigger="axis", axis_pointer_type="cross"),
             datazoom_opts=[opts.DataZoomOpts(range_start=0, range_end=100)],
             xaxis_opts=opts.AxisOpts(name="年份", axislabel_opts=opts.LabelOpts(rotate=45)),
